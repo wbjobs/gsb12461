@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebSocket 稳定性调试器</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>WebSocket 稳定性调试器</h1>
+  <div id="status-bar">
+    <span id="conn-state" class="badge state-idle">未连接</span>
+    <span class="stat">重连次数 <b id="stat-reconnect">0</b></span>
+    <span class="stat">补偿次数 <b id="stat-compensate">0</b></span>
+    <span class="stat">补偿补回 <b id="stat-compensated">0</b></span>
+    <span class="stat">乱序 <b id="stat-oos">0</b></span>
+    <span class="stat">重复(已去重) <b id="stat-dup">0</b></span>
+    <span class="stat">丢失 <b id="stat-lost">0</b></span>
+  </div>
+</header>
+
+<section id="conn-panel">
+  <input id="ws-url" type="text" placeholder="ws:// 或 wss:// 地址，如 ws://localhost:8080/ws" spellcheck="false">
+  <input id="seq-field" type="text" value="seq" title="消息 JSON 中表示序号的字段名" placeholder="序号字段">
+  <input id="connect-timeout" type="number" value="8000" min="1000" step="500" title="连接超时(ms)">
+  <input id="max-reconnect" type="number" value="10" min="0" title="重连次数上限">
+  <button id="btn-connect">连接</button>
+  <button id="btn-disconnect" disabled>断开</button>
+  <div id="conn-error" class="error" hidden></div>
+  <details>
+    <summary>补偿请求模板（重连后自动发送，{{afterSeq}} 会被替换）</summary>
+    <input id="comp-template" type="text" value='{"type":"compensate","after":{{afterSeq}}}' spellcheck="false">
+    <label><input id="comp-enabled" type="checkbox" checked> 重连后自动请求补偿</label>
+  </details>
+</section>
+
+<section id="send-panel">
+  <input id="send-input" type="text" placeholder='要发送的消息（JSON 会自动带上自增 seq）' spellcheck="false">
+  <label><input id="send-auto-seq" type="checkbox" checked> 自动附加 seq</label>
+  <button id="btn-send" disabled>发送</button>
+</section>
+
+<section id="timeline-panel">
+  <div class="panel-title">消息时序（Canvas）<span class="hint">绿=发送 蓝=接收 橙=乱序 红=重复 紫=补偿补回</span></div>
+  <canvas id="timeline" height="120"></canvas>
+</section>
+
+<section id="msg-panel">
+  <div class="panel-title">
+    消息记录
+    <span>
+      <label><input id="filter-dup" type="checkbox"> 显示已去重的重复消息</label>
+      <button id="btn-clear">清空历史</button>
+    </span>
+  </div>
+  <table id="msg-table">
+    <thead><tr><th>#</th><th>序号</th><th>时间</th><th>方向</th><th>标记</th><th>内容</th></tr></thead>
+    <tbody id="msg-body"></tbody>
+  </table>
+</section>
+
+<script src="js/store.js"></script>
+<script src="js/sequencer-client.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/connection.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
