@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebSocket 稳定性调试台</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>WebSocket 稳定性调试台</h1>
+    <div class="conn-area">
+      <label class="url-input">
+        <span>地址</span>
+        <input id="wsUrl" type="text" spellcheck="false" autocomplete="off"
+               placeholder="ws://localhost:8080/ws" />
+      </label>
+      <button id="btnConnect" class="primary" type="button">连接</button>
+      <button id="btnDisconnect" type="button" disabled>断开</button>
+      <button id="btnClear" class="ghost" type="button">清空历史</button>
+    </div>
+  </header>
+
+  <section class="statusbar" aria-label="连接状态">
+    <div class="status-item">
+      <span id="statusDot" class="dot idle"></span>
+      <span>状态：</span><strong id="statusText">未连接</strong>
+    </div>
+    <div class="status-item">重连次数：<strong id="reconnectCount">0</strong></div>
+    <div class="status-item">补偿次数：<strong id="compensationCount">0</strong></div>
+    <div class="status-item">补偿消息：<strong id="compensatedMsgCount">0</strong> 条</div>
+    <div class="status-item">乱序：<strong id="outOfOrderCount">0</strong></div>
+    <div class="status-item">重复（已去重）：<strong id="duplicateCount">0</strong></div>
+    <div class="status-item" id="backoffInfo" hidden>下次重连：<strong id="backoffSec">--</strong>s</div>
+    <div class="status-item grow"><span id="statusHint" class="hint"></span></div>
+  </section>
+
+  <main class="layout">
+    <section class="panel messages-panel">
+      <div class="panel-head">
+        <h2>消息记录</h2>
+        <div class="filters">
+          <label><input type="checkbox" id="filterRecv" checked /> 接收</label>
+          <label><input type="checkbox" id="filterSend" checked /> 发送</label>
+          <label><input type="checkbox" id="filterEvent" checked /> 事件</label>
+          <label><input type="checkbox" id="filterAnomaly" checked /> 仅异常</label>
+        </div>
+      </div>
+      <div id="messageList" class="message-list" tabindex="0" aria-live="polite"></div>
+      <form id="sendForm" class="send-bar">
+        <input id="sendInput" type="text" placeholder="输入消息（纯文本），Enter 发送"
+               autocomplete="off" disabled />
+        <button type="submit" id="btnSend" disabled>发送</button>
+      </form>
+    </section>
+
+    <section class="panel timeline-panel">
+      <div class="panel-head">
+        <h2>消息时序（Canvas）</h2>
+        <div class="timeline-controls">
+          <button type="button" id="btnZoomOut" title="缩小">－</button>
+          <button type="button" id="btnZoomIn" title="放大">＋</button>
+          <button type="button" id="btnZoomReset">重置</button>
+          <label class="follow"><input type="checkbox" id="followTimeline" checked /> 跟随最新</label>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="timelineCanvas"></canvas>
+        <div id="canvasTooltip" class="canvas-tooltip" hidden></div>
+      </div>
+      <div class="legend">
+        <span><i class="lg send"></i>发送</span>
+        <span><i class="lg recv"></i>接收</span>
+        <span><i class="lg ooo"></i>乱序</span>
+        <span><i class="lg dup"></i>重复</span>
+        <span><i class="lg comp"></i>补偿</span>
+        <span><i class="lg gap"></i>缺口区间</span>
+      </div>
+    </section>
+  </main>
+
+  <section class="panel chaos-panel">
+    <div class="panel-head">
+      <h2>异常链路模拟（配合内置测试服务器）</h2>
+      <span class="hint">仅在连接内置服务器时可用，用于验收断线重连 / 乱序 / 重复 / 补偿</span>
+    </div>
+    <div class="chaos-buttons">
+      <button type="button" data-chaos="drop" disabled>服务器断链（触发重连）</button>
+      <button type="button" data-chaos="duplicate" disabled>下一条重复</button>
+      <button type="button" data-chaos="reorder" disabled>下一条乱序</button>
+      <button type="button" data-chaos="gap" disabled>丢弃 3 条（触发补偿）</button>
+      <button type="button" data-chaos="blackhole" disabled>丢弃且不响应补偿（补偿失败重试）</button>
+    </div>
+  </section>
+
+  <script src="js/db.js"></script>
+  <script src="js/protocol.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
